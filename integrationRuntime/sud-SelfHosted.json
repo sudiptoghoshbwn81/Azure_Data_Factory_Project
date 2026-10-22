@@ -1,0 +1,6 @@
+{
+	"name": "sud-SelfHosted",
+	"properties": {
+		"type": "SelfHosted"
+	}
+}
