@@ -1,0 +1,15 @@
+{
+	"name": "sgmdatafactory",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "968f3802-827b-487c-952a-85a3b9a119b6",
+		"tenantId": "7c29601b-4abd-4d7c-b7d0-4e2d8a21d07b"
+	}
+}

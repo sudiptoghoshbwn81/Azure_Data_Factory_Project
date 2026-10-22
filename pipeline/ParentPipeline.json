@@ -1,0 +1,107 @@
+{
+	"name": "ParentPipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "ExecuteOnprem",
+				"type": "ExecutePipeline",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "onprem_ingestion",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "ExecuteAPI",
+				"type": "ExecutePipeline",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "ExecuteOnprem",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "API Ingestion",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "ExecuteIncremental",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "ExecuteAPI",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "SQLToDatalake",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "FailureAlert",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "ExecuteIncremental",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": {
+						"value": "https://adflogicapp-gse5ccg8bjg5fge0.westus3-01.azurewebsites.net:443/api/alerts/triggers/When_an_HTTP_request_is_received/invoke?api-version=2022-05-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=npL4cSHiSzGV-0MdCc8XNWkKjK_JeXhVjsVBg9dMDOo",
+						"type": "Expression"
+					},
+					"body": {
+						"value": "\n{\n    \"PipeLine_name\": \"@{pipeline().Pipeline}\",\n    \"runid\": \"@{pipeline().RunId}\",\n    \"status\": \"@{activity('ExecuteIncremental').Status}\",\n    \"error\": \"@{activity('ExecuteIncremental').output.pipelineReturnValue.error}\"\n}\n",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2026-10-21T17:50:37Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
